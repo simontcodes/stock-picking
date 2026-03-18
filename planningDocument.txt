@@ -1,0 +1,283 @@
+# Stock Investing App – Planning Document
+
+## 1. Product Vision
+
+**Purpose:**
+Define the core goal of the app.
+
+**Example:**
+This app helps retail investors identify and evaluate high-quality stocks using a transparent scoring system based on fundamentals and growth metrics.
+
+---
+
+## 2. Target User
+
+**Questions to answer:**
+
+* Who is the user?
+* What is their experience level?
+* What problems do they face?
+
+**Example:**
+
+* Retail investors (age 20–45)
+* Intermediate level (not beginners, not professionals)
+* Struggle with:
+
+  * Knowing which stocks to pick
+  * Understanding financial data
+  * Comparing companies quickly
+
+---
+
+## 3. Investing Philosophy
+
+**Questions to answer:**
+
+* What type of investing does the app support?
+* What defines a “good stock”?
+
+**Example:**
+Hybrid approach:
+
+* Growth (revenue growth, earnings growth)
+* Quality (profit margins, ROE)
+* Valuation (reasonable P/E, FCF yield)
+
+A “good stock” is:
+
+* Growing revenue consistently
+* Profitable with strong margins
+* Not overvalued
+
+---
+
+## 4. Core User Flows
+
+**List what users will actually do in the app.**
+
+**Example:**
+
+* Sign up / log in
+* Search for a stock (e.g., AAPL)
+* View stock profile
+* Analyze metrics
+* Add to watchlist
+* Compare with another stock
+* View personal portfolio
+* Rate or score a stock
+
+---
+
+## 5. MVP Features (Version 1)
+
+### Must-Have
+
+* Stock search
+* Stock detail page
+* Key financial metrics
+* Watchlist
+* Basic scoring system
+
+### Nice-to-Have
+
+* Portfolio tracking
+* Alerts
+* Stock comparison
+* Notes / thesis tracking
+
+### Future Features
+
+* AI recommendations
+* Social/community features
+* Advanced screeners
+* Backtesting
+
+---
+
+## 6. Data Requirements
+
+**Questions to answer:**
+
+* What data do we need?
+* Where does it come from?
+
+**Example Data Types:**
+
+* Stock prices (real-time or delayed)
+* Company info (sector, industry)
+* Financial statements (revenue, earnings)
+* Ratios (P/E, ROE, debt)
+* Earnings dates
+
+**Example Sources:**
+
+* Yahoo Finance API
+* Alpha Vantage
+* Financial Modeling Prep
+
+---
+
+## 7. Domain Model (Entities)
+
+**Core Entities:**
+
+* User
+* Stock
+* Watchlist
+* Portfolio
+* Holding
+* Transaction
+* StockScore
+* Note (thesis)
+
+**Example:**
+
+* A User has many Watchlists
+* A Watchlist has many Stocks
+* A Portfolio has many Holdings
+
+---
+
+## 8. Core Screens (UX)
+
+**Example Screens:**
+
+* Landing page
+* Dashboard
+* Stock detail page
+* Watchlist page
+* Portfolio page
+* Compare page
+
+**Notes:**
+Start with simple wireframes (even on paper).
+
+---
+
+## 9. Scoring System
+
+**Define how stocks are evaluated.**
+
+**Example Model:**
+
+* Revenue growth → 20%
+* Profitability → 20%
+* Valuation → 20%
+* Balance sheet strength → 20%
+* Momentum → 20%
+
+**Output:**
+Each stock gets a score from 0–100.
+
+---
+
+## 10. Legal / Positioning
+
+**Questions to answer:**
+
+* Are we giving advice or just analysis?
+
+**Example:**
+
+* This app is for informational purposes only
+* Not financial advice
+* Users make their own decisions
+
+---
+
+## 11. Technical Architecture (High Level)
+
+**Frontend:**
+
+* Example: Angular or Next.js
+
+**Backend:**
+
+* Example: NestJS
+
+**Database:**
+
+* Example: PostgreSQL or MongoDB
+
+**Other:**
+
+* Authentication system
+* API integrations
+* Charting library
+
+---
+
+## 12. Development Phases
+
+### Phase 1: Planning
+
+* Define vision
+* Define MVP
+* Choose data sources
+
+### Phase 2: Design
+
+* Wireframes
+* UX flows
+
+### Phase 3: Setup
+
+* Repo
+* Backend
+* Database
+
+### Phase 4: Build MVP
+
+* Stock search
+* Stock page
+* Watchlist
+* Scoring system
+
+### Phase 5: Testing
+
+* Validate data accuracy
+* Improve UX
+
+---
+
+## 13. Risks & Challenges
+
+**Examples:**
+
+* Data accuracy issues
+* API limitations
+* Scope creep
+* Complex financial calculations
+
+---
+
+## 14. Next Steps (After Meeting)
+
+**Example:**
+
+* Finalize MVP scope
+* Choose data provider
+* Create Git repository
+* Assign responsibilities
+* Build first feature (stock search)
+
+---
+
+## 15. Meeting Output Checklist
+
+At the end of your meeting, you should have:
+
+* Clear product vision
+* Defined target user
+* Chosen investing philosophy
+* MVP feature list
+* List of data sources
+* Scoring system draft
+* Initial screen structure
+* Next 1–2 week action plan
+
+---
+
+**Tip:**
+Keep this document alive and update it as the project evolves.
