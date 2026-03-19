@@ -9,8 +9,6 @@ Define the core goal of the app.
 This app helps retail investors identify and evaluate high-quality stocks using a transparent scoring system based on fundamentals and growth metrics.
 
 ---
-weccsd
-
 ## 2. Target User
 
 **Questions to answer:**
@@ -280,5 +278,10 @@ At the end of your meeting, you should have:
 
 ---
 
-**Tip:**
-Keep this document alive and update it as the project evolves.
+Key Takeaways simon 3/18/26
+//TODO
+* Investigar apis to get stock data.
+* Crear framework inicial.
+* which chart library.
+* Reimagine stock general information with signal
+
