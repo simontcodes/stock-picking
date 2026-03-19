@@ -9,6 +9,7 @@ Define the core goal of the app.
 This app helps retail investors identify and evaluate high-quality stocks using a transparent scoring system based on fundamentals and growth metrics.
 
 ---
+weccsd
 
 ## 2. Target User
 
