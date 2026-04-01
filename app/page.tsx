@@ -11,18 +11,26 @@ import { ScoreCard } from "@/components/dashboard/score-card";
 import { KeyMetricsCard } from "@/components/dashboard/key-metrics-card";
 import type { DashboardResponse } from "@/lib/types/stock";
 
-async function fetchDashboard(ticker: string): Promise<DashboardResponse> {
-  const res = await fetch(`/api/stock/dashboard?ticker=${ticker}`);
-  if (!res.ok) throw new Error("Failed to fetch dashboard data");
+async function fetchDashboard(
+  ticker: string,
+  range: string,
+): Promise<DashboardResponse> {
+  const res = await fetch(
+    `/api/stock/dashboard?ticker=${ticker}&range=${range}`,
+  );
+  if (!res.ok) {
+    throw new Error("Failed to fetch dashboard data");
+  }
   return res.json();
 }
 
 export default function HomePage() {
   const [ticker] = useState("AAPL");
+  const [range] = useState("1y");
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["stock-dashboard", ticker],
-    queryFn: () => fetchDashboard(ticker),
+    queryKey: ["stock-dashboard", ticker, range],
+    queryFn: () => fetchDashboard(ticker, range),
   });
 
   return (

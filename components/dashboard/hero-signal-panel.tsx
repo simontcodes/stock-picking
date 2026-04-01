@@ -2,6 +2,13 @@ import { DashboardModule } from "./dashboard-module";
 import type { DashboardResponse } from "@/lib/types/stock";
 
 export function HeroSignalPanel({ data }: { data: DashboardResponse }) {
+  const signalStyles =
+    data.signal === "BUY"
+      ? "bg-[rgba(10,188,86,0.14)] text-[var(--primary)]"
+      : data.signal === "SELL"
+        ? "bg-red-500/15 text-red-400"
+        : "bg-white/10 text-[var(--text-secondary)]";
+
   return (
     <DashboardModule className="rounded-[1.5rem] px-6 py-5">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -18,7 +25,9 @@ export function HeroSignalPanel({ data }: { data: DashboardResponse }) {
         <div>
           <div className="label-sm text-[var(--text-muted)]">Market Signal</div>
           <div className="mt-2 flex items-center gap-3">
-            <span className="rounded-full bg-red-500/15 px-3 py-1 text-xs font-semibold text-red-400">
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${signalStyles}`}
+            >
               {data.signal}
             </span>
             <span className="text-3xl font-bold tabular-nums">
@@ -31,10 +40,10 @@ export function HeroSignalPanel({ data }: { data: DashboardResponse }) {
           <div>
             <div className="label-sm text-[var(--text-muted)]">Year High</div>
             <div className="mt-2 text-xl font-semibold tabular-nums">
-              ${data.yearHigh.value.toFixed(2)}
+              ${data.summary.yearHigh.value.toFixed(2)}
             </div>
             <div className="text-sm text-red-300">
-              {data.yearHigh.percentFromHigh}%
+              {data.summary.yearHigh.percentFromHigh.toFixed(2)}%
             </div>
           </div>
 
@@ -43,7 +52,7 @@ export function HeroSignalPanel({ data }: { data: DashboardResponse }) {
               Best Day to Buy
             </div>
             <div className="mt-1 text-lg font-semibold text-[var(--primary)]">
-              {data.bestDayToBuy}
+              {data.summary.bestDayToBuy}
             </div>
           </div>
         </div>

@@ -1,14 +1,21 @@
 import { DashboardModule } from "./dashboard-module";
-import { DashboardResponse } from "@/lib/types/stock";
+import type { DashboardResponse } from "@/lib/types/stock";
 
 export function PositionCalculatorCard({ data }: { data: DashboardResponse }) {
   return (
     <DashboardModule eyebrow="Risk" title="Position Calculator">
       <div className="space-y-4 text-sm">
         <Row label="Entry Price" value={`$${data.currentPrice.toFixed(2)}`} />
-        <Row label="Stop Loss" value={`$${data.stopLoss.toFixed(2)}`} />
-        <Row label="Position Size" value={`$${data.positionSize.toFixed(2)}`} />
-        <Row label="Max Loss" value={`$${data.maxLoss.toFixed(2)}`} danger />
+        <Row label="Stop Loss" value={`$${data.summary.stopLoss.toFixed(2)}`} />
+        <Row
+          label="Position Size"
+          value={`$${data.summary.positionSize.toFixed(2)}`}
+        />
+        <Row
+          label="Max Loss"
+          value={`$${data.summary.maxLoss.toFixed(2)}`}
+          danger
+        />
       </div>
     </DashboardModule>
   );

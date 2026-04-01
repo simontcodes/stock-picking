@@ -1,17 +1,51 @@
+export type SignalType = "BUY" | "SELL" | "HOLD";
+export type CrossoverType = "bullish" | "bearish";
+
+export type ChartPoint = {
+  date: string;
+  close: number;
+  volume?: number;
+};
+
+export type LinePoint = {
+  date: string;
+  value: number | null;
+};
+
+export type CrossoverPoint = {
+  date: string;
+  price: number;
+  movingAverage: number;
+  type: CrossoverType;
+};
+
 export type DashboardResponse = {
   ticker: string;
   companyName: string;
+  range: string;
   currentPrice: number;
-  signal: "BUY" | "SELL" | "HOLD";
-  yearHigh: {
-    value: number;
-    percentFromHigh: number;
+  signal: SignalType;
+
+  overallChart: {
+    priceSeries: ChartPoint[];
+    movingAverage30: LinePoint[];
+    crossovers: CrossoverPoint[];
+    floor: number;
+    ceiling: number;
   };
-  bestDayToBuy: string;
-  movingAverage: number;
-  stopLoss: number;
-  positionSize: number;
-  maxLoss: number;
+
+  summary: {
+    yearHigh: {
+      value: number;
+      percentFromHigh: number;
+    };
+    movingAverage: number;
+    stopLoss: number;
+    positionSize: number;
+    maxLoss: number;
+    bestDayToBuy: string;
+  };
+
   performance: {
     today: number;
     previousDay: number;
@@ -20,16 +54,14 @@ export type DashboardResponse = {
     sixtyDays: number;
     oneYear: number;
   };
-  chart: Array<{
-    date: string;
-    close: number;
-  }>;
+
   metrics: {
     volume: number;
     avgVolume?: number;
     rsi?: number;
     macd?: number;
   };
+
   score: {
     total: number;
     growth: number;

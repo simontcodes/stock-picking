@@ -1,5 +1,5 @@
 import { DashboardModule } from "./dashboard-module";
-import { DashboardResponse } from "@/lib/types/stock";
+import type { DashboardResponse } from "@/lib/types/stock";
 
 export function StockSummaryCard({ data }: { data: DashboardResponse }) {
   return (
@@ -10,7 +10,7 @@ export function StockSummaryCard({ data }: { data: DashboardResponse }) {
         <Row label="Current Price" value={`$${data.currentPrice.toFixed(2)}`} />
         <Row
           label="Moving Average"
-          value={`$${data.movingAverage.toFixed(2)}`}
+          value={`$${data.summary.movingAverage.toFixed(2)}`}
         />
       </div>
     </DashboardModule>
