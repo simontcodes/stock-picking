@@ -1,0 +1,218 @@
+Here you go — a **single, unified, professional story set** that covers **all three charts** in your stock‑analysis web application. It’s clean, structured, and ready for your friend to implement.
+
+I grouped everything into **Epics → User Stories → Acceptance Criteria**, so it reads like a real product backlog.
+
+---
+
+# 📘 **Epic: Stock Analysis Visualizations (All 3 Charts)**
+
+This epic covers the three core visual components of your stock‑analysis tool:
+
+1. **Overall Indicator Chart**  
+2. **MACD Chart**  
+3. **Volume Chart**
+
+Each chart must update dynamically based on the selected ticker and date range, and all calculations must match your existing Python/Excel logic.
+
+---
+
+# ⭐ **Story 1 — Overall Indicator Chart**
+
+## **Story 1.1 — Display Daily Closing Price**
+**As a** user  
+**I want** to see a line chart of the stock’s daily closing price  
+**So that** I can visualize price movement over time  
+
+**Acceptance Criteria**
+- Continuous line chart of daily closing prices  
+- Hover shows date + closing price  
+- Updates when ticker or date range changes  
+
+---
+
+## **Story 1.2 — Display 30‑Day Moving Average (Calendar Days)**
+**As a** user  
+**I want** to see a 30‑day moving average line  
+**So that** I can compare price to its trend  
+
+**Acceptance Criteria**
+- 30‑calendar‑day moving average line displayed  
+- Uses backend calculation identical to your Python logic  
+- Updates with ticker/date changes  
+
+---
+
+## **Story 1.3 — Show Price/MA Crossovers**
+**As a** user  
+**I want** arrows marking when price crosses the MA  
+**So that** I can quickly identify buy/sell signals  
+
+**Acceptance Criteria**
+- Green upward arrow when price crosses **above** MA  
+- Red downward arrow when price crosses **below** MA  
+- Hover shows:
+  - Date  
+  - Price  
+  - MA value  
+  - Crossover type  
+
+---
+
+## **Story 1.4 — Display Floor and Ceiling Levels**
+**As a** user  
+**I want** horizontal floor and ceiling lines  
+**So that** I can see support and resistance  
+
+**Acceptance Criteria**
+- Two horizontal lines: floor & ceiling  
+- Values come from backend logic  
+- Hover shows numeric level  
+
+---
+
+## **Story 1.5 — Combined Chart Behavior**
+**As a** user  
+**I want** all elements on one chart  
+**So that** I can interpret the stock at a glance  
+
+**Acceptance Criteria**
+- Closing price, MA, arrows, floor, ceiling all visible  
+- Scales correctly  
+- Updates with ticker/date changes  
+
+---
+
+# ⭐ **Story 2 — MACD Chart**
+
+## **Story 2.1 — Display MACD Line**
+**As a** user  
+**I want** to see the MACD line  
+**So that** I can understand momentum shifts  
+
+**Acceptance Criteria**
+- MACD line displayed  
+- Hover shows date + MACD value  
+- Updates with ticker/date changes  
+
+---
+
+## **Story 2.2 — Display MACD Signal Line**
+**As a** user  
+**I want** to see the MACD signal line  
+**So that** I can compare it to the MACD  
+
+**Acceptance Criteria**
+- MACD_SIGNAL line displayed  
+- Hover shows date + signal value  
+- Updates with ticker/date changes  
+
+---
+
+## **Story 2.3 — Show MACD Crossovers**
+**As a** user  
+**I want** arrows marking MACD crossovers  
+**So that** I can identify momentum buy/sell signals  
+
+**Acceptance Criteria**
+- Green upward arrow when MACD crosses **above** MACD_SIGNAL  
+- Red downward arrow when MACD crosses **below** MACD_SIGNAL  
+- Hover shows:
+  - Date  
+  - MACD  
+  - MACD_SIGNAL  
+  - Crossover type  
+
+---
+
+## **Story 2.4 — Backend MACD Calculation**
+**As a** backend service  
+**I need** to compute MACD using the same logic as the existing Python tool  
+**So that** results match the Excel/Python version  
+
+**Acceptance Criteria**
+- MACD = EMA_12 − EMA_26  
+- MACD_SIGNAL = EMA_9 of MACD  
+- Uses your exact Python logic:
+
+```
+def macd(data):
+    x = data['Adj Close']
+    data["EMA_12"] = moving_avg_ema(x, 12)
+    data["EMA_26"] = moving_avg_ema(x, 26)
+    EMA_12 = moving_avg_ema(x, 12)
+    EMA_26 = moving_avg_ema(x, 26)
+    mac_d = EMA_12 - EMA_26
+    data["MACD"] = mac_d
+    data["MACD_SIGNAL"] = moving_avg_ema(mac_d, 9)
+```
+
+- JSON output includes:
+  - date  
+  - MACD  
+  - MACD_SIGNAL  
+  - crossover flag  
+
+---
+
+# ⭐ **Story 3 — Volume Chart**
+
+## **Story 3.1 — Display Daily Volume**
+**As a** user  
+**I want** to see daily trading volume  
+**So that** I can understand market activity  
+
+**Acceptance Criteria**
+- Bar chart of daily volume  
+- Hover shows date + volume  
+- Updates with ticker/date changes  
+
+---
+
+## **Story 3.2 — Display 30‑Day Volume Moving Average**
+**As a** user  
+**I want** to see a 30‑day moving average of volume  
+**So that** I can compare daily volume to typical levels  
+
+**Acceptance Criteria**
+- 30‑day volume MA line displayed  
+- Uses backend calculation identical to your Python logic  
+- Updates with ticker/date changes  
+
+---
+
+## **Story 3.3 — Combined Volume Chart Behavior**
+**As a** user  
+**I want** volume bars and MA on one chart  
+**So that** I can interpret volume trends easily  
+
+**Acceptance Criteria**
+- Daily volume bars + MA line  
+- Scales correctly  
+- Updates with ticker/date changes  
+
+---
+
+# ⭐ **Story 4 — Unified Chart Behavior Across All 3 Charts**
+
+**As a** user  
+**I want** all charts to behave consistently  
+**So that** the interface feels intuitive  
+
+**Acceptance Criteria**
+- All charts update when:
+  - Ticker changes  
+  - Date range changes  
+- All charts support hover tooltips  
+- All charts use consistent colors, fonts, and styles  
+- All calculations come from backend Python logic  
+- Errors (e.g., missing data, API issues) are handled gracefully  
+
+---
+
+# If you want, I can now generate:
+### ✔ A full **API contract** (endpoints, JSON structure, request/response examples)  
+### ✔ A **backend task list** for your Python logic  
+### ✔ A **frontend component breakdown** for your friend  
+### ✔ A **project roadmap** with milestones  
+
+Just tell me which direction you want to go.
