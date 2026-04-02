@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { calculateMacd } from "@/lib/calculations/macd";
+import { detectMacdCrossovers } from "@/lib/calculations/macd-crossovers";
 import { getLatestPrice, getTimeSeries } from "@/lib/api/twelve-data";
 import { calculateSimpleMovingAverage } from "@/lib/calculations/moving-average";
 import { detectPriceMovingAverageCrossovers } from "@/lib/calculations/crossovers";
@@ -70,6 +72,9 @@ export async function GET(request: NextRequest) {
     );
     const { floor, ceiling } = calculateFloorAndCeiling(priceSeries);
 
+    const macdSeries = calculateMacd(priceSeries);
+    const macdCrossovers = detectMacdCrossovers(macdSeries);
+
     const closes = priceSeries.map((p) => p.close);
     const yearHigh = Math.max(...closes);
 
@@ -122,6 +127,11 @@ export async function GET(request: NextRequest) {
         ceiling,
       },
 
+      macdChart: {
+        series: macdSeries,
+        crossovers: macdCrossovers,
+      },
+
       summary: {
         yearHigh: {
           value: yearHigh,
@@ -145,6 +155,11 @@ export async function GET(request: NextRequest) {
               .filter((value) => value > 0),
           ),
         ),
+        macd:
+          macdSeries.at(-1)?.macd !== null &&
+          macdSeries.at(-1)?.macd !== undefined
+            ? Number(macdSeries.at(-1)?.macd?.toFixed(4))
+            : undefined,
       },
 
       score: {

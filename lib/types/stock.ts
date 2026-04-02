@@ -19,6 +19,19 @@ export type CrossoverPoint = {
   type: CrossoverType;
 };
 
+export type MacdPoint = {
+  date: string;
+  macd: number | null;
+  signal: number | null;
+};
+
+export type MacdCrossoverPoint = {
+  date: string;
+  macd: number;
+  signal: number;
+  type: CrossoverType;
+};
+
 export type DashboardResponse = {
   ticker: string;
   companyName: string;
@@ -32,6 +45,11 @@ export type DashboardResponse = {
     crossovers: CrossoverPoint[];
     floor: number;
     ceiling: number;
+  };
+
+  macdChart: {
+    series: MacdPoint[];
+    crossovers: MacdCrossoverPoint[];
   };
 
   summary: {

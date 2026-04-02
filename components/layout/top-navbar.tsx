@@ -1,12 +1,27 @@
-import { Bell, Settings, User, Search } from "lucide-react";
+"use client";
+
+import { Bell, Settings, User, Search, PanelLeftClose } from "lucide-react";
 import Image from "next/image";
 
-export function TopNavbar() {
+type TopNavbarProps = {
+  onToggleSidebar: () => void;
+};
+
+export function TopNavbar({ onToggleSidebar }: TopNavbarProps) {
   return (
     <header className="sticky top-0 z-40 h-[72px] border-b border-white/5 bg-[rgba(16,20,25,0.88)] backdrop-blur-xl">
       <div className="flex h-full items-center justify-between px-6 lg:px-8">
         {/* LEFT */}
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={onToggleSidebar}
+            className="flex size-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.04)] text-[var(--text-secondary)] transition hover:bg-[rgba(255,255,255,0.08)] hover:text-white"
+            aria-label="Toggle sidebar"
+            type="button"
+          >
+            <PanelLeftClose className="size-5" />
+          </button>
+
           {/* LOGO */}
           <div className="group relative flex h-12 items-center">
             <Image
@@ -16,24 +31,23 @@ export function TopNavbar() {
               height={48}
               priority
               className="
-      h-10 w-auto
-      transition-all duration-300 ease-out
-      brightness-110 contrast-125
-      drop-shadow-[0_0_12px_rgba(34,211,238,0.25)]
-      group-hover:brightness-125
-      group-hover:drop-shadow-[0_0_18px_rgba(34,211,238,0.45)]
-    "
+                h-10 w-auto
+                transition-all duration-300 ease-out
+                brightness-110 contrast-125
+                drop-shadow-[0_0_12px_rgba(34,211,238,0.25)]
+                group-hover:brightness-125
+                group-hover:drop-shadow-[0_0_18px_rgba(34,211,238,0.45)]
+              "
             />
 
-            {/* subtle glow layer */}
             <div
               className="
-    pointer-events-none absolute inset-0
-    opacity-0 blur-xl
-    transition duration-300
-    group-hover:opacity-100
-    bg-[radial-gradient(circle_at_left,rgba(34,211,238,0.25),transparent_60%)]
-  "
+                pointer-events-none absolute inset-0
+                opacity-0 blur-xl
+                transition duration-300
+                group-hover:opacity-100
+                bg-[radial-gradient(circle_at_left,rgba(34,211,238,0.25),transparent_60%)]
+              "
             />
           </div>
 

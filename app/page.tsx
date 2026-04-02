@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { HeroSignalPanel } from "@/components/dashboard/hero-signal-panel";
 import { PriceChartCard } from "@/components/dashboard/price-chart-card";
+import { MacdChartCard } from "@/components/dashboard/macd-chart-card";
+import { VolumeChartCard } from "@/components/dashboard/volume-chart-card";
 import { PerformanceTable } from "@/components/dashboard/performance-table";
 import { PositionCalculatorCard } from "@/components/dashboard/position-calculator-card";
 import { ScoreCard } from "@/components/dashboard/score-card";
@@ -15,9 +17,7 @@ async function fetchDashboard(
   ticker: string,
   range: string,
 ): Promise<DashboardResponse> {
-  const res = await fetch(
-    `/api/stock/dashboard?ticker=${ticker}&range=${range}`,
-  );
+  const res = await fetch(`/api/stock/dashboard?ticker=${ticker}&range=${range}`);
   if (!res.ok) {
     throw new Error("Failed to fetch dashboard data");
   }
@@ -25,7 +25,7 @@ async function fetchDashboard(
 }
 
 export default function HomePage() {
-  const [ticker] = useState("AAPL");
+  const [ticker] = useState("COST");
   const [range] = useState("1y");
 
   const { data, isLoading, error } = useQuery({
@@ -52,6 +52,8 @@ export default function HomePage() {
           <div className="space-y-6 xl:col-span-8">
             <HeroSignalPanel data={data} />
             <PriceChartCard data={data} />
+            <MacdChartCard data={data} />
+            <VolumeChartCard data={data} />
             <PerformanceTable data={data} />
           </div>
 
