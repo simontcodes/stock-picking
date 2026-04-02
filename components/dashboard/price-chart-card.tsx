@@ -86,10 +86,11 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
         symbol: "none",
         lineStyle: {
           width: 3,
-          color: "#f5f7fa",
+          color: "#E6EDF3",
         },
         areaStyle: {
-          opacity: 0.08,
+          opacity: 0.06,
+          color: "#E6EDF3",
         },
       },
       {
@@ -100,7 +101,9 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
         symbol: "none",
         lineStyle: {
           width: 2,
-          color: "#0abc56",
+          color: "#60A5FA",
+          shadowBlur: 10,
+          shadowColor: "rgba(96,165,250,0.35)",
         },
       },
       {
@@ -168,8 +171,8 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
         symbol: "none",
         lineStyle: {
           type: "dashed",
-          width: 1.5,
-          color: "rgba(255,255,255,0.22)",
+          width: 1.2,
+          color: "rgba(255,255,255,0.18)",
         },
       },
       {

@@ -80,7 +80,24 @@ export function MacdChartCard({ data }: { data: DashboardResponse }) {
         symbol: "none",
         lineStyle: {
           width: 2.5,
-          color: "#0abc56",
+          color: "#4DA3FF",
+        },
+        emphasis: {
+          focus: "series",
+        },
+        areaStyle: {
+          opacity: 0.08,
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "#4DA3FF" },
+              { offset: 1, color: "transparent" },
+            ],
+          },
         },
       },
       {
@@ -91,38 +108,33 @@ export function MacdChartCard({ data }: { data: DashboardResponse }) {
         symbol: "none",
         lineStyle: {
           width: 2,
-          color: "#ff8b7c",
+          color: "#A78BFA",
+          opacity: 0.85,
         },
       },
       {
         name: "Bullish Cross",
         type: "scatter",
-        data: bullishCrossovers.map((point) => [
-          point.date,
-          point.macd,
-          point.signal,
-          point.type,
-        ]),
+        data: bullishCrossovers.map((point) => [point.date, point.macd]),
         symbol: "arrow",
-        symbolSize: 16,
+        symbolSize: 14,
         itemStyle: {
-          color: "#0abc56",
+          color: "#22c55e",
+          shadowBlur: 10,
+          shadowColor: "rgba(34,197,94,0.5)",
         },
       },
       {
         name: "Bearish Cross",
         type: "scatter",
-        data: bearishCrossovers.map((point) => [
-          point.date,
-          point.macd,
-          point.signal,
-          point.type,
-        ]),
+        data: bearishCrossovers.map((point) => [point.date, point.macd]),
         symbol: "arrow",
         symbolRotate: 180,
-        symbolSize: 16,
+        symbolSize: 14,
         itemStyle: {
-          color: "#ff8b7c",
+          color: "#f87171",
+          shadowBlur: 10,
+          shadowColor: "rgba(248,113,113,0.5)",
         },
       },
     ],

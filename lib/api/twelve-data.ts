@@ -1,5 +1,8 @@
 const BASE_URL = "https://api.twelvedata.com";
 
+const PRICE_REVALIDATE_SECONDS = 60;
+const HISTORICAL_REVALIDATE_SECONDS = 60 * 60 * 12; // 12 hours
+
 function getApiKey(): string {
   const apiKey = process.env.TWELVE_DATA_API_KEY;
 
@@ -10,9 +13,15 @@ function getApiKey(): string {
   return apiKey;
 }
 
+type TdFetchOptions = {
+  revalidate?: number;
+  tags?: string[];
+};
+
 async function tdFetch<T>(
   path: string,
   params: Record<string, string | number | boolean | undefined>,
+  options?: TdFetchOptions,
 ): Promise<T> {
   const url = new URL(`${BASE_URL}/${path}`);
 
@@ -26,11 +35,21 @@ async function tdFetch<T>(
     headers: {
       Authorization: `apikey ${getApiKey()}`,
     },
-    next: { revalidate: 0 },
+    next: {
+      revalidate: options?.revalidate,
+      tags: options?.tags,
+    },
   });
 
   const data = await res.json();
-  console.log(data);
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      `[TD] ${path} ${params.symbol ? `(${String(params.symbol)})` : ""} | revalidate=${
+        options?.revalidate ?? "default"
+      }`,
+    );
+  }
 
   if (!res.ok || data?.status === "error") {
     throw new Error(data?.message || `Twelve Data request failed: ${path}`);
@@ -63,7 +82,16 @@ export type TwelveDataTimeSeriesResponse = {
 };
 
 export async function getLatestPrice(symbol: string) {
-  return tdFetch<TwelveDataPriceResponse>("price", { symbol });
+  const normalizedSymbol = symbol.trim().toUpperCase();
+
+  return tdFetch<TwelveDataPriceResponse>(
+    "price",
+    { symbol: normalizedSymbol },
+    {
+      revalidate: PRICE_REVALIDATE_SECONDS,
+      tags: [`td:price:${normalizedSymbol}`],
+    },
+  );
 }
 
 export async function getTimeSeries(
@@ -71,9 +99,18 @@ export async function getTimeSeries(
   interval = "1day",
   outputsize = 252,
 ) {
-  return tdFetch<TwelveDataTimeSeriesResponse>("time_series", {
-    symbol,
-    interval,
-    outputsize,
-  });
+  const normalizedSymbol = symbol.trim().toUpperCase();
+
+  return tdFetch<TwelveDataTimeSeriesResponse>(
+    "time_series",
+    {
+      symbol: normalizedSymbol,
+      interval,
+      outputsize,
+    },
+    {
+      revalidate: HISTORICAL_REVALIDATE_SECONDS,
+      tags: [`td:series:${normalizedSymbol}:${interval}:${outputsize}`],
+    },
+  );
 }

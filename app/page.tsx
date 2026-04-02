@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
+import { TickerSearch } from "@/components/dashboard/ticker-search";
 import { HeroSignalPanel } from "@/components/dashboard/hero-signal-panel";
 import { PriceChartCard } from "@/components/dashboard/price-chart-card";
 import { MacdChartCard } from "@/components/dashboard/macd-chart-card";
@@ -13,28 +15,98 @@ import { ScoreCard } from "@/components/dashboard/score-card";
 import { KeyMetricsCard } from "@/components/dashboard/key-metrics-card";
 import type { DashboardResponse } from "@/lib/types/stock";
 
+type DashboardLayoutMode = "default" | "wide";
+
 async function fetchDashboard(
   ticker: string,
   range: string,
 ): Promise<DashboardResponse> {
-  const res = await fetch(`/api/stock/dashboard?ticker=${ticker}&range=${range}`);
+  const res = await fetch(
+    `/api/stock/dashboard?ticker=${encodeURIComponent(ticker)}&range=${encodeURIComponent(range)}`,
+  );
+
   if (!res.ok) {
-    throw new Error("Failed to fetch dashboard data");
+    let message = "Failed to fetch dashboard data";
+
+    try {
+      const errorData = await res.json();
+      if (errorData?.error) {
+        message = errorData.error;
+      }
+    } catch {
+      // ignore json parse errors
+    }
+
+    throw new Error(message);
   }
+
   return res.json();
 }
 
 export default function HomePage() {
-  const [ticker] = useState("COST");
-  const [range] = useState("1y");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const { data, isLoading, error } = useQuery({
+  const ticker = useMemo(
+    () => (searchParams.get("ticker") ?? "COST").trim().toUpperCase(),
+    [searchParams],
+  );
+
+  const range = useMemo(
+    () => searchParams.get("range") ?? "1y",
+    [searchParams],
+  );
+
+  const layout = useMemo<DashboardLayoutMode>(() => {
+    const value = searchParams.get("layout");
+    return value === "wide" ? "wide" : "default";
+  }, [searchParams]);
+
+  const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["stock-dashboard", ticker, range],
     queryFn: () => fetchDashboard(ticker, range),
+    enabled: !!ticker,
   });
 
+  function updateSearchParams(
+    updates: Record<string, string | null | undefined>,
+  ) {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    router.push(`?${params.toString()}`);
+  }
+
+  function handleSearch(nextTicker: string) {
+    const normalizedTicker = nextTicker.trim().toUpperCase();
+    if (!normalizedTicker) return;
+
+    updateSearchParams({
+      ticker: normalizedTicker,
+    });
+  }
+
+  function handleLayoutChange(nextLayout: DashboardLayoutMode) {
+    updateSearchParams({
+      layout: nextLayout === "default" ? null : nextLayout,
+    });
+  }
+
   return (
-    <AppShell>
+    <AppShell layout={layout} onLayoutChange={handleLayoutChange}>
+      <TickerSearch
+        defaultValue={ticker}
+        onSearch={handleSearch}
+        isLoading={isLoading || isFetching}
+      />
+
       {isLoading && (
         <div className="rounded-[1.25rem] bg-[var(--surface-container-low)] p-8 text-[var(--text-secondary)]">
           Loading dashboard...
@@ -43,26 +115,53 @@ export default function HomePage() {
 
       {error && (
         <div className="rounded-[1.25rem] bg-[var(--surface-container-low)] p-8 text-[var(--tertiary)]">
-          Failed to load stock data.
+          {error instanceof Error
+            ? error.message
+            : "Failed to load stock data."}
         </div>
       )}
 
       {data && (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-          <div className="space-y-6 xl:col-span-8">
+        <>
+          <div className="mb-6">
             <HeroSignalPanel data={data} />
-            <PriceChartCard data={data} />
-            <MacdChartCard data={data} />
-            <VolumeChartCard data={data} />
-            <PerformanceTable data={data} />
           </div>
 
-          <div className="space-y-6 xl:col-span-4">
-            <PositionCalculatorCard data={data} />
-            <KeyMetricsCard data={data} />
-            <ScoreCard data={data} />
-          </div>
-        </div>
+          {layout === "default" ? (
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+              <div className="space-y-6 xl:col-span-8">
+                <PriceChartCard data={data} />
+                <MacdChartCard data={data} />
+                <VolumeChartCard data={data} />
+                <PerformanceTable data={data} />
+              </div>
+
+              <div className="space-y-6 xl:col-span-4">
+                <PositionCalculatorCard data={data} />
+                <KeyMetricsCard data={data} />
+                <ScoreCard data={data} />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <PriceChartCard data={data} />
+              <MacdChartCard data={data} />
+              <VolumeChartCard data={data} />
+
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+                <div className="xl:col-span-8">
+                  <PerformanceTable data={data} />
+                </div>
+
+                <div className="space-y-6 xl:col-span-4">
+                  <PositionCalculatorCard data={data} />
+                  <KeyMetricsCard data={data} />
+                  <ScoreCard data={data} />
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </AppShell>
   );
