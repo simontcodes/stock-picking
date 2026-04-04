@@ -31,16 +31,31 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
     },
     tooltip: {
       trigger: "axis",
+      axisPointer: {
+        type: "cross",
+        lineStyle: {
+          color: "rgba(255,255,255,0.18)",
+          width: 1,
+        },
+        crossStyle: {
+          color: "rgba(255,255,255,0.18)",
+        },
+      },
       backgroundColor: "rgba(16,20,25,0.96)",
       borderColor: "rgba(255,255,255,0.08)",
       borderWidth: 1,
       textStyle: {
         color: "#f5f7fa",
       },
+      extraCssText:
+        "backdrop-filter: blur(10px); border-radius: 12px; padding: 10px 12px;",
     },
     legend: {
       top: 0,
       right: 0,
+      icon: "circle",
+      itemWidth: 10,
+      itemHeight: 10,
       textStyle: {
         color: "#a6adb7",
       },
@@ -61,6 +76,9 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
       axisTick: {
         show: false,
       },
+      splitLine: {
+        show: false,
+      },
     },
     yAxis: {
       type: "value",
@@ -79,8 +97,39 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
     },
     series: [
       {
+        name: "Floor",
+        type: "line",
+        z: 1,
+        data: dates.map(() => data.overallChart.floor),
+        symbol: "none",
+        lineStyle: {
+          type: "dashed",
+          width: 1.2,
+          color: "rgba(255,255,255,0.14)",
+        },
+        tooltip: {
+          show: false,
+        },
+      },
+      {
+        name: "Ceiling",
+        type: "line",
+        z: 1,
+        data: dates.map(() => data.overallChart.ceiling),
+        symbol: "none",
+        lineStyle: {
+          type: "dashed",
+          width: 1.4,
+          color: "rgba(255,255,255,0.18)",
+        },
+        tooltip: {
+          show: false,
+        },
+      },
+      {
         name: "Close",
         type: "line",
+        z: 2,
         data: prices,
         smooth: true,
         symbol: "none",
@@ -90,25 +139,55 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
         },
         areaStyle: {
           opacity: 0.06,
-          color: "#E6EDF3",
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "rgba(230,237,243,0.22)" },
+              { offset: 1, color: "rgba(230,237,243,0.00)" },
+            ],
+          },
+        },
+        emphasis: {
+          focus: "series",
         },
       },
       {
         name: "MA 30",
         type: "line",
+        z: 2,
         data: movingAverage,
         smooth: true,
         symbol: "none",
         lineStyle: {
-          width: 2,
+          width: 2.2,
           color: "#60A5FA",
-          shadowBlur: 10,
-          shadowColor: "rgba(96,165,250,0.35)",
+        },
+        areaStyle: {
+          opacity: 0.04,
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "rgba(96,165,250,0.18)" },
+              { offset: 1, color: "rgba(96,165,250,0.00)" },
+            ],
+          },
+        },
+        emphasis: {
+          focus: "series",
         },
       },
       {
         name: "Bullish Cross",
         type: "scatter",
+        z: 5,
         data: bullishCrossovers.map((point) => [
           point.date,
           point.price,
@@ -119,7 +198,14 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
         symbolSize: 18,
         symbolRotate: 0,
         itemStyle: {
-          color: "#0abc56",
+          color: "#22c55e",
+          borderColor: "#0b0f14",
+          borderWidth: 1.5,
+          shadowBlur: 12,
+          shadowColor: "rgba(34,197,94,0.6)",
+        },
+        emphasis: {
+          scale: 1.15,
         },
         tooltip: {
           formatter: (params: any) => {
@@ -138,6 +224,7 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
       {
         name: "Bearish Cross",
         type: "scatter",
+        z: 5,
         data: bearishCrossovers.map((point) => [
           point.date,
           point.price,
@@ -148,7 +235,14 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
         symbolSize: 18,
         symbolRotate: 180,
         itemStyle: {
-          color: "#ff8b7c",
+          color: "#f87171",
+          borderColor: "#0b0f14",
+          borderWidth: 1.5,
+          shadowBlur: 12,
+          shadowColor: "rgba(248,113,113,0.6)",
+        },
+        emphasis: {
+          scale: 1.15,
         },
         tooltip: {
           formatter: (params: any) => {
@@ -162,28 +256,6 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
               </div>
             `;
           },
-        },
-      },
-      {
-        name: "Floor",
-        type: "line",
-        data: dates.map(() => data.overallChart.floor),
-        symbol: "none",
-        lineStyle: {
-          type: "dashed",
-          width: 1.2,
-          color: "rgba(255,255,255,0.18)",
-        },
-      },
-      {
-        name: "Ceiling",
-        type: "line",
-        data: dates.map(() => data.overallChart.ceiling),
-        symbol: "none",
-        lineStyle: {
-          type: "dashed",
-          width: 1.5,
-          color: "rgba(255,255,255,0.22)",
         },
       },
     ],
