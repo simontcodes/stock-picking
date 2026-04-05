@@ -13,6 +13,7 @@ import { PerformanceTable } from "@/components/dashboard/performance-table";
 import { PositionCalculatorCard } from "@/components/dashboard/position-calculator-card";
 import { ScoreCard } from "@/components/dashboard/score-card";
 import { KeyMetricsCard } from "@/components/dashboard/key-metrics-card";
+import { WatchlistCard } from "@/components/dashboard/watchlist-card";
 import type { DashboardResponse } from "@/lib/types/stock";
 
 type DashboardLayoutMode = "default" | "wide";
@@ -52,10 +53,7 @@ export default function HomePage() {
     [searchParams],
   );
 
-  const range = useMemo(
-    () => searchParams.get("range") ?? "1y",
-    [searchParams],
-  );
+  const range = useMemo(() => searchParams.get("range") ?? "1y", [searchParams]);
 
   const layout = useMemo<DashboardLayoutMode>(() => {
     const value = searchParams.get("layout");
@@ -67,6 +65,9 @@ export default function HomePage() {
     queryFn: () => fetchDashboard(ticker, range),
     enabled: !!ticker,
   });
+
+  const isInitialLoading = isLoading && !data;
+  const isRefreshing = isFetching && !!data;
 
   function updateSearchParams(
     updates: Record<string, string | null | undefined>,
@@ -104,16 +105,16 @@ export default function HomePage() {
       <TickerSearch
         defaultValue={ticker}
         onSearch={handleSearch}
-        isLoading={isLoading || isFetching}
+        isLoading={isRefreshing}
       />
 
-      {isLoading && (
+      {isInitialLoading && (
         <div className="rounded-[1.25rem] bg-[var(--surface-container-low)] p-8 text-[var(--text-secondary)]">
           Loading dashboard...
         </div>
       )}
 
-      {error && (
+      {error && !isInitialLoading && (
         <div className="rounded-[1.25rem] bg-[var(--surface-container-low)] p-8 text-[var(--tertiary)]">
           {error instanceof Error
             ? error.message
@@ -137,6 +138,7 @@ export default function HomePage() {
               </div>
 
               <div className="space-y-6 xl:col-span-4">
+                <WatchlistCard />
                 <PositionCalculatorCard data={data} />
                 <KeyMetricsCard data={data} />
                 <ScoreCard data={data} />
