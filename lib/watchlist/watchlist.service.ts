@@ -149,3 +149,22 @@ export async function removeTickerFromDefaultWatchlist(
 
   return toWatchlistDto(updated);
 }
+
+export async function getEnabledDefaultWatchlistTickers(): Promise<string[]> {
+  const watchlist = await getOrCreateDefaultWatchlist();
+
+  const items = await prisma.watchlistItem.findMany({
+    where: {
+      watchlistId: watchlist.id,
+      enabled: true,
+    },
+    orderBy: {
+      ticker: "asc",
+    },
+    select: {
+      ticker: true,
+    },
+  });
+
+  return items.map((item) => item.ticker);
+}

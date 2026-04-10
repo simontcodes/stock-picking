@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+#ai
+.codex
+CLAUDE.md
+
 # production
 /build
 

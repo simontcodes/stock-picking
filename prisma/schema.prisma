@@ -6,6 +6,17 @@ datasource db {
   provider = "postgresql"
 }
 
+enum AlertSignal {
+  BUY
+  SELL
+}
+
+enum AlertDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 model Watchlist {
   id        String          @id @default(cuid())
   name      String
@@ -30,4 +41,58 @@ model WatchlistItem {
   @@unique([watchlistId, ticker])
   @@index([watchlistId])
   @@index([ticker])
+}
+
+model WatchlistAlert {
+  id                    String              @id @default(cuid())
+  ticker                String
+  signal                AlertSignal
+  candleDate            DateTime
+  overallCrossoverType  String
+  macdCrossoverType     String
+  overallCrossoverAt    DateTime
+  macdCrossoverAt       DateTime
+  notificationStatus    AlertDeliveryStatus @default(PENDING)
+  notificationAttempts  Int                 @default(0)
+  lastNotifiedAt        DateTime?
+  lastNotificationError String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  notifications AlertNotification[]
+
+  @@unique([ticker, signal, candleDate])
+  @@index([ticker, candleDate])
+  @@index([notificationStatus])
+}
+
+model WatchlistSignalState {
+  id                   String      @id @default(cuid())
+  ticker               String      @unique
+  signal               AlertSignal
+  signalDate           DateTime
+  overallSignalDate    DateTime
+  macdSignalDate       DateTime
+  overallCrossoverType String
+  macdCrossoverType    String
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@index([signal])
+  @@index([signalDate])
+}
+
+model AlertNotification {
+  id         String              @id @default(cuid())
+  alertId    String
+  channel    String
+  status     AlertDeliveryStatus
+  message    String?
+  error      String?
+  attemptedAt DateTime           @default(now())
+
+  alert WatchlistAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@index([alertId])
+  @@index([channel, attemptedAt])
 }
