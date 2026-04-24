@@ -25,6 +25,8 @@ The example env file is at [.env.example](/home/simontang/projects/stock-picking
 
 If `INTERNAL_API_KEY` is unset, the internal scan route is open. For any deployed environment, you should set it.
 
+Authentication uses database-backed sessions stored in the `AuthSession` table and an HttpOnly `tiqer_session` cookie. No additional auth environment variable is required.
+
 ## Watchlist Alert Scan
 
 The project includes an internal route that scans all enabled watchlist tickers using daily data and creates alerts only when both signals agree on the latest candle:
@@ -58,7 +60,7 @@ The response includes:
 - `tickersWithoutSignal`
 - `errors`
 
-The scanner stores a baseline signal state per ticker and only creates alerts when the current confirmed signal changes from the last known stored state.
+The scanner stores a baseline signal state per user and ticker, and only creates alerts when that user's current confirmed signal changes from the last known stored state.
 
 To manually trigger the watchlist report notification path:
 
@@ -69,9 +71,8 @@ curl -X POST http://localhost:3000/api/internal/watchlist-alerts/scan \
   -d '{"sendReport":true}'
 ```
 
-Duplicate alerts are prevented for the same `ticker + signal + candleDate`.
+Duplicate alerts are prevented for the same `user + ticker + signal + candleDate`.
 
 ## Notes
 
-- Prisma client generation was updated for the new alert models.
-- Current lint errors in unrelated existing files may still need cleanup before the repo is fully lint-clean.
+- Prisma client generation was updated for the auth, ownership, and alert models.

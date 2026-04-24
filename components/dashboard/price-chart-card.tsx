@@ -4,6 +4,11 @@ import ReactECharts from "echarts-for-react";
 import { DashboardModule } from "./dashboard-module";
 import type { DashboardResponse } from "@/lib/types/stock";
 
+type CrossoverTooltipParams = {
+  name: string;
+  data: [string, number, number, string];
+};
+
 export function PriceChartCard({ data }: { data: DashboardResponse }) {
   const dates = data.overallChart.priceSeries.map((point) => point.date);
   const prices = data.overallChart.priceSeries.map((point) => point.close);
@@ -208,7 +213,7 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
           scale: 1.15,
         },
         tooltip: {
-          formatter: (params: any) => {
+          formatter: (params: CrossoverTooltipParams) => {
             const [, price, ma, type] = params.data;
             return `
               <div>
@@ -245,7 +250,7 @@ export function PriceChartCard({ data }: { data: DashboardResponse }) {
           scale: 1.15,
         },
         tooltip: {
-          formatter: (params: any) => {
+          formatter: (params: CrossoverTooltipParams) => {
             const [, price, ma, type] = params.data;
             return `
               <div>

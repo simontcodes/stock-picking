@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
 import { scanWatchlistForAlerts } from "@/lib/alerts/watchlist-alerts.service";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export async function POST() {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized." },
+        { status: 401 },
+      );
+    }
+
     const result = await scanWatchlistForAlerts({
+      userId: user.id,
       sendReport: true,
     });
 

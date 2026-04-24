@@ -7,14 +7,12 @@ type Props = {
   onSearch: (ticker: string) => void;
   defaultValue?: string;
   isLoading?: boolean;
-  recentTickers?: string[];
 };
 
 export function TickerSearch({
   onSearch,
   defaultValue = "AAPL",
   isLoading = false,
-  recentTickers = ["AAPL", "MSFT", "NVDA", "TSLA"],
 }: Props) {
   const [ticker, setTicker] = useState(defaultValue);
   const [mounted, setMounted] = useState(false);

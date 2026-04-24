@@ -1,13 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  addTickerToDefaultWatchlist,
-  getOrCreateDefaultWatchlist,
-  removeTickerFromDefaultWatchlist,
+  addTickerToDefaultWatchlistForUser,
+  getOrCreateDefaultWatchlistForUser,
+  removeTickerFromDefaultWatchlistForUser,
 } from "@/lib/watchlist/watchlist.service";
+import { getCurrentUser } from "@/lib/auth/session";
+
+async function getAuthenticatedApiUser() {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return null;
+  }
+
+  return user;
+}
 
 export async function GET() {
   try {
-    const watchlist = await getOrCreateDefaultWatchlist();
+    const user = await getAuthenticatedApiUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized." },
+        { status: 401 },
+      );
+    }
+
+    const watchlist = await getOrCreateDefaultWatchlistForUser(user.id);
 
     return NextResponse.json({
       success: true,
@@ -28,6 +48,15 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getAuthenticatedApiUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized." },
+        { status: 401 },
+      );
+    }
+
     const body = (await request.json()) as {
       ticker?: string;
       notes?: string;
@@ -43,7 +72,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const watchlist = await addTickerToDefaultWatchlist({
+    const watchlist = await addTickerToDefaultWatchlistForUser(user.id, {
       ticker: body.ticker,
       notes: body.notes,
     });
@@ -67,6 +96,15 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const user = await getAuthenticatedApiUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized." },
+        { status: 401 },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const ticker = searchParams.get("ticker");
 
@@ -80,7 +118,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const watchlist = await removeTickerFromDefaultWatchlist(ticker);
+    const watchlist = await removeTickerFromDefaultWatchlistForUser(
+      user.id,
+      ticker,
+    );
 
     return NextResponse.json({
       success: true,

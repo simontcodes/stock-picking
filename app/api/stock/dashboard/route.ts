@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDashboardData } from "@/lib/api/dashboard-data";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const ticker = searchParams.get("ticker")?.trim().toUpperCase();
     const range = searchParams.get("range") ?? "1y";

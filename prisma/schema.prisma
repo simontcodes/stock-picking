@@ -17,14 +17,47 @@ enum AlertDeliveryStatus {
   FAILED
 }
 
+model User {
+  id           String    @id @default(cuid())
+  name         String?
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions             AuthSession[]
+  watchlists           Watchlist[]
+  watchlistAlerts      WatchlistAlert[]
+  watchlistSignalStates WatchlistSignalState[]
+}
+
+model AuthSession {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 model Watchlist {
   id        String          @id @default(cuid())
+  userId    String
   name      String
   isDefault Boolean         @default(false)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   items     WatchlistItem[]
+
+  @@index([userId])
+  @@index([userId, isDefault])
 }
 
 model WatchlistItem {
@@ -45,6 +78,7 @@ model WatchlistItem {
 
 model WatchlistAlert {
   id                    String              @id @default(cuid())
+  userId                String
   ticker                String
   signal                AlertSignal
   candleDate            DateTime
@@ -59,16 +93,19 @@ model WatchlistAlert {
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   notifications AlertNotification[]
 
-  @@unique([ticker, signal, candleDate])
-  @@index([ticker, candleDate])
+  @@unique([userId, ticker, signal, candleDate])
+  @@index([userId])
+  @@index([userId, ticker, candleDate])
   @@index([notificationStatus])
 }
 
 model WatchlistSignalState {
   id                   String      @id @default(cuid())
-  ticker               String      @unique
+  userId               String
+  ticker               String
   signal               AlertSignal
   signalDate           DateTime
   overallSignalDate    DateTime
@@ -78,6 +115,10 @@ model WatchlistSignalState {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ticker])
+  @@index([userId])
   @@index([signal])
   @@index([signalDate])
 }

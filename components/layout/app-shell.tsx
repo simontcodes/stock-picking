@@ -3,17 +3,20 @@
 import { useState } from "react";
 import { TopNavbar } from "./top-navbar";
 import { Sidebar } from "./sidebar";
+import type { AuthUser } from "@/lib/auth/session";
 
 export type DashboardLayoutMode = "default" | "wide";
 
 type AppShellProps = {
   children: React.ReactNode;
+  user: AuthUser;
   layout?: DashboardLayoutMode;
   onLayoutChange?: (layout: DashboardLayoutMode) => void;
 };
 
 export function AppShell({
   children,
+  user,
   layout = "default",
   onLayoutChange,
 }: AppShellProps) {
@@ -31,6 +34,7 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <TopNavbar
+          user={user}
           layout={layout}
           onLayoutChange={onLayoutChange}
           onToggleSidebar={() => setCollapsed((prev) => !prev)}

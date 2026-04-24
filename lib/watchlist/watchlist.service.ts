@@ -56,9 +56,11 @@ function toWatchlistDto(watchlist: {
   };
 }
 
-export async function getOrCreateDefaultWatchlist(): Promise<WatchlistDto> {
+export async function getOrCreateDefaultWatchlistForUser(
+  userId: string,
+): Promise<WatchlistDto> {
   let watchlist = await prisma.watchlist.findFirst({
-    where: { isDefault: true },
+    where: { userId, isDefault: true },
     include: {
       items: {
         orderBy: { ticker: "asc" },
@@ -69,6 +71,7 @@ export async function getOrCreateDefaultWatchlist(): Promise<WatchlistDto> {
   if (!watchlist) {
     watchlist = await prisma.watchlist.create({
       data: {
+        userId,
         name: "My Watchlist",
         isDefault: true,
       },
@@ -83,14 +86,15 @@ export async function getOrCreateDefaultWatchlist(): Promise<WatchlistDto> {
   return toWatchlistDto(watchlist);
 }
 
-export async function addTickerToDefaultWatchlist(
-  input: CreateWatchlistItemInput
+export async function addTickerToDefaultWatchlistForUser(
+  userId: string,
+  input: CreateWatchlistItemInput,
 ): Promise<WatchlistDto> {
   const ticker = normalizeTicker(input.ticker);
   assertValidTicker(ticker);
 
   const notes = normalizeNotes(input.notes);
-  const watchlist = await getOrCreateDefaultWatchlist();
+  const watchlist = await getOrCreateDefaultWatchlistForUser(userId);
 
   await prisma.watchlistItem.upsert({
     where: {
@@ -123,13 +127,14 @@ export async function addTickerToDefaultWatchlist(
   return toWatchlistDto(updated);
 }
 
-export async function removeTickerFromDefaultWatchlist(
-  tickerInput: string
+export async function removeTickerFromDefaultWatchlistForUser(
+  userId: string,
+  tickerInput: string,
 ): Promise<WatchlistDto> {
   const ticker = normalizeTicker(tickerInput);
   assertValidTicker(ticker);
 
-  const watchlist = await getOrCreateDefaultWatchlist();
+  const watchlist = await getOrCreateDefaultWatchlistForUser(userId);
 
   await prisma.watchlistItem.deleteMany({
     where: {
@@ -150,8 +155,10 @@ export async function removeTickerFromDefaultWatchlist(
   return toWatchlistDto(updated);
 }
 
-export async function getEnabledDefaultWatchlistTickers(): Promise<string[]> {
-  const watchlist = await getOrCreateDefaultWatchlist();
+export async function getEnabledDefaultWatchlistTickersForUser(
+  userId: string,
+): Promise<string[]> {
+  const watchlist = await getOrCreateDefaultWatchlistForUser(userId);
 
   const items = await prisma.watchlistItem.findMany({
     where: {

@@ -13,7 +13,7 @@ import {
   type AlertNotificationPayload,
   type WatchlistReportPayload,
 } from "@/lib/alerts/notifiers";
-import { getEnabledDefaultWatchlistTickers } from "@/lib/watchlist/watchlist.service";
+import { getEnabledDefaultWatchlistTickersForUser } from "@/lib/watchlist/watchlist.service";
 import type {
   CrossoverPoint,
   CrossoverType,
@@ -24,6 +24,7 @@ import type {
 const WATCHLIST_SCAN_RANGE = "1y";
 
 type AlertCandidate = {
+  userId: string;
   ticker: string;
   signal: AlertSignal;
   candleDate: Date;
@@ -78,6 +79,7 @@ export type WatchlistAlertScanResult = {
 };
 
 export type ScanWatchlistOptions = {
+  userId?: string;
   sendReport?: boolean;
 };
 
@@ -89,10 +91,10 @@ function toCandleDate(value: string): Date {
   return new Date(value);
 }
 
-function findCrossoverByDate(
-  crossovers: CrossoverPoint[] | MacdCrossoverPoint[],
+function findCrossoverByDate<T extends CrossoverPoint | MacdCrossoverPoint>(
+  crossovers: T[],
   date: string,
-) {
+): T | null {
   return crossovers.find((point) => point.date === date) ?? null;
 }
 
@@ -200,10 +202,12 @@ function getRunSignalForLatestCandle(
 }
 
 function deriveAlertCandidate(
+  userId: string,
   ticker: string,
   currentSignal: ConfirmedSignalSnapshot,
 ): AlertCandidate {
   return {
+    userId,
     ticker,
     signal: currentSignal.signal,
     candleDate: toCandleDate(currentSignal.signalDate),
@@ -226,11 +230,17 @@ function signalChanged(
 }
 
 async function upsertSignalState(
+  userId: string,
   ticker: string,
   currentSignal: ConfirmedSignalSnapshot,
 ) {
   return prisma.watchlistSignalState.upsert({
-    where: { ticker },
+    where: {
+      userId_ticker: {
+        userId,
+        ticker,
+      },
+    },
     update: {
       signal: currentSignal.signal,
       signalDate: toCandleDate(currentSignal.signalDate),
@@ -240,6 +250,7 @@ async function upsertSignalState(
       macdCrossoverType: currentSignal.macdCrossoverType,
     },
     create: {
+      userId,
       ticker,
       signal: currentSignal.signal,
       signalDate: toCandleDate(currentSignal.signalDate),
@@ -335,7 +346,8 @@ async function notifyAlert(alert: WatchlistAlert) {
 async function createAlert(candidate: AlertCandidate): Promise<WatchlistAlert | null> {
   const existing = await prisma.watchlistAlert.findUnique({
     where: {
-      ticker_signal_candleDate: {
+      userId_ticker_signal_candleDate: {
+        userId: candidate.userId,
         ticker: candidate.ticker,
         signal: candidate.signal,
         candleDate: candidate.candleDate,
@@ -397,20 +409,21 @@ async function notifyWatchlistReport(result: WatchlistAlertScanResult) {
 export async function scanWatchlistForAlerts(
   options: ScanWatchlistOptions = {},
 ): Promise<WatchlistAlertScanResult> {
-  const tickers = await getEnabledDefaultWatchlistTickers();
-  const existingStates = await prisma.watchlistSignalState.findMany({
-    where: {
-      ticker: {
-        in: tickers,
-      },
-    },
-  });
-  const stateByTicker = new Map(existingStates.map((state) => [state.ticker, state]));
+  const users = options.userId
+    ? [{ id: options.userId }]
+    : await prisma.user.findMany({
+        select: {
+          id: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
 
   const result: WatchlistAlertScanResult = {
     scannedAt: new Date().toISOString(),
     cadence: "daily",
-    tickersScanned: tickers.length,
+    tickersScanned: 0,
     alertsCreated: 0,
     alertsSuppressed: 0,
     tickersWithoutSignal: [],
@@ -420,103 +433,120 @@ export async function scanWatchlistForAlerts(
     reportTriggered: Boolean(options.sendReport),
   };
 
-  for (const ticker of tickers) {
-    try {
-      const analysis = await buildTickerAnalysis(ticker, WATCHLIST_SCAN_RANGE);
-      const currentSignal = getCurrentConfirmedSignal(analysis);
-      const runEvaluation = getRunSignalForLatestCandle(analysis);
-      const previousState = stateByTicker.get(ticker);
+  for (const user of users) {
+    const tickers = await getEnabledDefaultWatchlistTickersForUser(user.id);
+    result.tickersScanned += tickers.length;
 
-      if (!currentSignal) {
-        result.tickersWithoutSignal.push(ticker);
+    const existingStates = await prisma.watchlistSignalState.findMany({
+      where: {
+        userId: user.id,
+        ticker: {
+          in: tickers,
+        },
+      },
+    });
+    const stateByTicker = new Map(
+      existingStates.map((state) => [state.ticker, state]),
+    );
+
+    for (const ticker of tickers) {
+      try {
+        const analysis = await buildTickerAnalysis(ticker, WATCHLIST_SCAN_RANGE);
+        const currentSignal = getCurrentConfirmedSignal(analysis);
+        const runEvaluation = getRunSignalForLatestCandle(analysis);
+        const previousState = stateByTicker.get(ticker);
+
+        if (!currentSignal) {
+          result.tickersWithoutSignal.push(ticker);
+          result.tickerResults.push({
+            ticker,
+            checkedCandleDate: runEvaluation.checkedCandleDate,
+            currentSignal: null,
+            runStatus: "no_signal_on_checked_candle",
+            runSignal: runEvaluation.runSignal,
+            runReason:
+              "No current confirmed BUY or SELL state was found from the latest overall and MACD crossover directions.",
+          });
+          continue;
+        }
+
+        await upsertSignalState(user.id, ticker, currentSignal);
+
+        if (!previousState) {
+          result.tickerResults.push({
+            ticker,
+            checkedCandleDate: runEvaluation.checkedCandleDate,
+            currentSignal,
+            runStatus: "baseline_recorded",
+            runSignal: runEvaluation.runSignal,
+            runReason:
+              "The current confirmed signal was saved as the baseline state. No alert was sent because there was no previous known state to compare against.",
+          });
+          continue;
+        }
+
+        if (!signalChanged(previousState, currentSignal)) {
+          result.tickerResults.push({
+            ticker,
+            checkedCandleDate: runEvaluation.checkedCandleDate,
+            currentSignal,
+            runStatus: "no_change",
+            runSignal: runEvaluation.runSignal,
+            runReason:
+              "The current confirmed signal matches the last known stored state, so no alert was created.",
+          });
+          continue;
+        }
+
+        const candidate = deriveAlertCandidate(user.id, ticker, currentSignal);
+        const alert = await createAlert(candidate);
+
+        if (!alert) {
+          result.alertsSuppressed += 1;
+          result.tickerResults.push({
+            ticker,
+            checkedCandleDate: runEvaluation.checkedCandleDate,
+            currentSignal,
+            runStatus: "duplicate_alert",
+            runSignal: runEvaluation.runSignal,
+            runReason:
+              "The signal changed, but an alert for this ticker, signal, and confirmation date already exists.",
+          });
+          continue;
+        }
+
+        await notifyAlert(alert);
+
+        result.alertsCreated += 1;
+        result.createdAlerts.push({
+          ticker: alert.ticker,
+          signal: alert.signal,
+          candleDate: alert.candleDate.toISOString().slice(0, 10),
+        });
         result.tickerResults.push({
           ticker,
           checkedCandleDate: runEvaluation.checkedCandleDate,
+          currentSignal,
+          runStatus: "alert_created",
+          runSignal: runEvaluation.runSignal,
+          runReason:
+            "The current confirmed signal changed from the last known stored state, so a new alert was created.",
+        });
+      } catch (error) {
+        result.errors.push({
+          ticker,
+          error: error instanceof Error ? error.message : "Unknown scan failure",
+        });
+        result.tickerResults.push({
+          ticker,
+          checkedCandleDate: null,
           currentSignal: null,
-          runStatus: "no_signal_on_checked_candle",
-          runSignal: runEvaluation.runSignal,
+          runStatus: "error",
+          runSignal: null,
           runReason:
-            "No current confirmed BUY or SELL state was found from the latest overall and MACD crossover directions.",
+            error instanceof Error ? error.message : "Unknown scan failure",
         });
-        continue;
       }
-
-      await upsertSignalState(ticker, currentSignal);
-
-      if (!previousState) {
-        result.tickerResults.push({
-          ticker,
-          checkedCandleDate: runEvaluation.checkedCandleDate,
-          currentSignal,
-          runStatus: "baseline_recorded",
-          runSignal: runEvaluation.runSignal,
-          runReason:
-            "The current confirmed signal was saved as the baseline state. No alert was sent because there was no previous known state to compare against.",
-        });
-        continue;
-      }
-
-      if (!signalChanged(previousState, currentSignal)) {
-        result.tickerResults.push({
-          ticker,
-          checkedCandleDate: runEvaluation.checkedCandleDate,
-          currentSignal,
-          runStatus: "no_change",
-          runSignal: runEvaluation.runSignal,
-          runReason:
-            "The current confirmed signal matches the last known stored state, so no alert was created.",
-        });
-        continue;
-      }
-
-      const candidate = deriveAlertCandidate(ticker, currentSignal);
-      const alert = await createAlert(candidate);
-
-      if (!alert) {
-        result.alertsSuppressed += 1;
-        result.tickerResults.push({
-          ticker,
-          checkedCandleDate: runEvaluation.checkedCandleDate,
-          currentSignal,
-          runStatus: "duplicate_alert",
-          runSignal: runEvaluation.runSignal,
-          runReason:
-            "The signal changed, but an alert for this ticker, signal, and confirmation date already exists.",
-        });
-        continue;
-      }
-
-      await notifyAlert(alert);
-
-      result.alertsCreated += 1;
-      result.createdAlerts.push({
-        ticker: alert.ticker,
-        signal: alert.signal,
-        candleDate: alert.candleDate.toISOString().slice(0, 10),
-      });
-      result.tickerResults.push({
-        ticker,
-        checkedCandleDate: runEvaluation.checkedCandleDate,
-        currentSignal,
-        runStatus: "alert_created",
-        runSignal: runEvaluation.runSignal,
-        runReason:
-          "The current confirmed signal changed from the last known stored state, so a new alert was created.",
-      });
-    } catch (error) {
-      result.errors.push({
-        ticker,
-        error: error instanceof Error ? error.message : "Unknown scan failure",
-      });
-      result.tickerResults.push({
-        ticker,
-        checkedCandleDate: null,
-        currentSignal: null,
-        runStatus: "error",
-        runSignal: null,
-        runReason:
-          error instanceof Error ? error.message : "Unknown scan failure",
-      });
     }
   }
 

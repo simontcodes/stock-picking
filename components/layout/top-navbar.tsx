@@ -1,21 +1,33 @@
 "use client";
 
-import { Bell, LayoutPanelLeft, Search, Settings, User } from "lucide-react";
+import { Bell, LayoutPanelLeft, LogOut, Search, Settings } from "lucide-react";
 import Image from "next/image";
+import { signOut } from "@/app/actions/auth";
+import type { AuthUser } from "@/lib/auth/session";
 import type { DashboardLayoutMode } from "./app-shell";
 import { LayoutSelector } from "./layout-selector";
 
 type TopNavbarProps = {
+  user: AuthUser;
   onToggleSidebar?: () => void;
   layout?: DashboardLayoutMode;
   onLayoutChange?: (layout: DashboardLayoutMode) => void;
 };
 
 export function TopNavbar({
+  user,
   onToggleSidebar,
   layout = "default",
   onLayoutChange,
 }: TopNavbarProps) {
+  const displayName = user.name || user.email;
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
   return (
     <header className="sticky top-0 z-40 h-[72px] border-b border-white/5 bg-[rgba(16,20,25,0.88)] backdrop-blur-xl">
       <div className="flex h-full items-center justify-between gap-4 px-6 lg:px-8">
@@ -100,13 +112,24 @@ export function TopNavbar({
             <Settings className="size-5" />
           </button>
 
-          <button
-            type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-[var(--text-secondary)] transition hover:bg-white/[0.06] hover:text-[var(--text-primary)]"
-            aria-label="Profile"
-          >
-            <User className="size-5" />
-          </button>
+          <div className="hidden items-center gap-3 rounded-full border border-white/8 bg-white/[0.03] py-1 pl-1 pr-3 md:flex">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-400/12 text-xs font-semibold text-emerald-200">
+              {initials || "U"}
+            </div>
+            <div className="max-w-[150px] truncate text-sm font-medium text-white/78">
+              {displayName}
+            </div>
+          </div>
+
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-[var(--text-secondary)] transition hover:bg-white/[0.06] hover:text-[var(--text-primary)]"
+              aria-label="Sign out"
+            >
+              <LogOut className="size-5" />
+            </button>
+          </form>
         </div>
       </div>
     </header>
