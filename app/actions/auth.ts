@@ -3,6 +3,7 @@
 import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { getInvitationForToken, hashInviteToken } from "@/lib/auth/invitations";
 import { createAuthSession, deleteCurrentAuthSession } from "@/lib/auth/session";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { prisma } from "@/lib/db/prisma";
@@ -12,11 +13,13 @@ export type AuthFormState = {
     name?: string[];
     email?: string[];
     password?: string[];
+    invite?: string[];
   };
   message?: string;
   values?: {
     name?: string;
     email?: string;
+    inviteToken?: string;
   };
 };
 
@@ -28,6 +31,7 @@ const signUpSchema = z.object({
     .min(10, "Password must be at least 10 characters.")
     .regex(/[A-Za-z]/, "Password must include a letter.")
     .regex(/[0-9]/, "Password must include a number."),
+  inviteToken: z.string().trim().min(1, "A valid invite is required."),
 });
 
 const signInSchema = z.object({
@@ -43,6 +47,7 @@ export async function signUp(
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
+    inviteToken: formData.get("inviteToken"),
   });
 
   if (!parsed.success) {
@@ -51,46 +56,98 @@ export async function signUp(
       values: {
         name: String(formData.get("name") ?? ""),
         email: String(formData.get("email") ?? ""),
+        inviteToken: String(formData.get("inviteToken") ?? ""),
       },
     };
   }
 
-  const { name, email, password } = parsed.data;
+  const { name, email, password, inviteToken } = parsed.data;
+  const invitation = await getInvitationForToken(inviteToken);
+
+  if (!invitation.ok || invitation.email !== email) {
+    return {
+      message: "This invite is invalid or can no longer be used.",
+      values: { name, email, inviteToken },
+    };
+  }
 
   try {
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        passwordHash: await hashPassword(password),
-        watchlists: {
-          create: {
-            name: "My Watchlist",
-            isDefault: true,
+    const passwordHash = await hashPassword(password);
+
+    const user = await prisma.$transaction(async (tx) => {
+      const activeInvitation = await tx.invitation.findUnique({
+        where: {
+          tokenHash: hashInviteToken(inviteToken),
+        },
+        select: {
+          id: true,
+          email: true,
+          expiresAt: true,
+          acceptedAt: true,
+        },
+      });
+
+      if (
+        !activeInvitation ||
+        activeInvitation.acceptedAt ||
+        activeInvitation.expiresAt <= new Date() ||
+        activeInvitation.email !== email
+      ) {
+        throw new Error("INVITE_INVALID");
+      }
+
+      const createdUser = await tx.user.create({
+        data: {
+          name,
+          email,
+          passwordHash,
+          watchlists: {
+            create: {
+              name: "My Watchlist",
+              isDefault: true,
+            },
           },
         },
-      },
-      select: {
-        id: true,
-      },
+        select: {
+          id: true,
+        },
+      });
+
+      await tx.invitation.update({
+        where: {
+          id: activeInvitation.id,
+        },
+        data: {
+          acceptedAt: new Date(),
+        },
+      });
+
+      return createdUser;
     });
 
     await createAuthSession(user.id);
   } catch (error) {
+    if (error instanceof Error && error.message === "INVITE_INVALID") {
+      return {
+        message: "This invite is invalid or can no longer be used.",
+        values: { name, email, inviteToken },
+      };
+    }
+
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
       return {
         message: "An account with this email already exists.",
-        values: { name, email },
+        values: { name, email, inviteToken },
       };
     }
 
     console.error("signUp failed:", error);
     return {
       message: "Unable to create your account right now.",
-      values: { name, email },
+      values: { name, email, inviteToken },
     };
   }
 

@@ -26,9 +26,27 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   sessions             AuthSession[]
+  invitationsSent      Invitation[]          @relation("InvitationsSent")
   watchlists           Watchlist[]
   watchlistAlerts      WatchlistAlert[]
   watchlistSignalStates WatchlistSignalState[]
+}
+
+model Invitation {
+  id          String    @id @default(cuid())
+  email       String
+  tokenHash   String    @unique
+  invitedById String?
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  invitedBy User? @relation("InvitationsSent", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([expiresAt])
+  @@index([invitedById])
 }
 
 model AuthSession {
